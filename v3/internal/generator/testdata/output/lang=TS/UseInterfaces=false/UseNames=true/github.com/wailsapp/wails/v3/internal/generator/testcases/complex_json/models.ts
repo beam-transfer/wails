@@ -62,7 +62,7 @@ export class Person {
     /**
      * Titles is optional in JSON
      */
-    "Titles"?: Title[];
+    declare "Titles"?: Title[];
 
     /**
      * Names has a
@@ -104,17 +104,17 @@ export class Person {
     /**
      * StrangestString is optional and serialized as a JSON string
      */
-    "StrangestString"?: `"${string}"`;
+    declare "StrangestString"?: `"${string}"`;
 
     /**
      * StringStrangest is serialized as a JSON string and optional
      */
-    "StringStrangest"?: `"${string}"`;
+    declare "StringStrangest"?: `"${string}"`;
 
     /**
      * embedded4 should be optional and appear with key "emb4"
      */
-    "emb4"?: embedded4;
+    declare "emb4"?: embedded4;
 
     /** Creates a new Person instance. */
     constructor($$source: Partial<Person> = {}) {

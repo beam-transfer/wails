@@ -139,7 +139,7 @@ export type GenericMapAlias<T, U> = { [_ in string]?: U };
  * A generic struct containing an alias.
  */
 export class GenericPerson<T> {
-    "Name"?: T;
+    declare "Name"?: T;
     "AliasedField": Alias;
 
     /** Creates a new GenericPerson instance. */
