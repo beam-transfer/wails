@@ -15,6 +15,7 @@ type GenerateBindingsOptions struct {
 	TS                bool   `name:"ts" description:"Generate Typescript bindings"`
 	UseInterfaces     bool   `name:"i" description:"Generate Typescript interfaces instead of classes"`
 	UseBundledRuntime bool   `name:"b" description:"Use the bundled runtime instead of importing the npm package"`
+	FieldNameTag      string `name:"fieldtag" description:"Struct tag to consult for JSON field names instead of 'json'. Supports bare-name form (e.g. 'yaml') and protobuf key=value form. Use 'protobuf' to match protojson output."`
 	UseNames          bool   `name:"names" description:"Use names instead of IDs for the binding calls"`
 	Obfuscated        bool   `name:"obfuscated" description:"Generate Go metadata that keeps binding method IDs stable in obfuscated builds"`
 	ObfuscatedOutput  string `name:"obfuscated-output" description:"Directory for the generated obfuscated bindings file (defaults to the main package directory). The destination package must be reachable from the main package's import graph so its init() runs."`
