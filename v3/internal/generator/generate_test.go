@@ -172,6 +172,133 @@ func TestGenerator(t *testing.T) {
 	}
 }
 
+// TestGeneratorFieldNameTag exercises the FieldNameTag override on a single
+// fixture (testcases/tagged_fields) without doubling the full golden tree.
+//
+// The default-mode behaviour is already covered by TestGenerator above: each
+// config produces a tagged_fields/models.{ts,js} that uses the snake_case
+// `json:` tag values. Here we just verify that setting FieldNameTag=protobuf
+// resolves field names from the `protobuf:` tag (camelCase wire names that
+// match protojson), while a field without a `protobuf:` tag still uses its
+// `json:` value.
+func TestGeneratorFieldNameTag(t *testing.T) {
+	const taggedFieldsPath = "github.com/wailsapp/wails/v3/internal/generator/testcases/tagged_fields"
+
+	captured := newCapturingCreator()
+
+	options := &flags.GenerateBindingsOptions{
+		ModelsFilename:    "models",
+		IndexFilename:     "index",
+		UseBundledRuntime: true,
+		TS:                true,
+		UseInterfaces:     true,
+		FieldNameTag:      "protobuf",
+	}
+
+	generator := NewGenerator(options, captured, config.NullLogger)
+	if _, err := generator.Generate(taggedFieldsPath); err != nil {
+		var report *ErrorReport
+		if !errors.As(err, &report) || report.HasErrors() {
+			t.Fatalf("generate failed: %v", err)
+		}
+	}
+
+	models, ok := captured.find("tagged_fields/models.ts")
+	if !ok {
+		t.Fatalf("no models.ts emitted for tagged_fields; got paths: %v", captured.paths())
+	}
+
+	mustContain := []string{
+		`"userId"`,         // protobuf form, json= wins over name=
+		`"fullName"`,       // protobuf form, json= wins over name=
+		`"isActive"`,       // protobuf form, json= wins over name=
+		`"status"`,         // protobuf form, name= only (no json= segment)
+		`"plain_go_field"`, // no protobuf tag - falls back to json tag
+	}
+	for _, want := range mustContain {
+		if !strings.Contains(models, want) {
+			t.Errorf("models.ts missing expected field name %s\n--- contents ---\n%s", want, models)
+		}
+	}
+
+	mustNotContain := []string{
+		`"user_id"`,   // protobuf json= should have overridden snake_case
+		`"full_name"`,
+		`"is_active"`,
+	}
+	for _, bad := range mustNotContain {
+		if strings.Contains(models, bad) {
+			t.Errorf("models.ts contains %s; expected protobuf override\n--- contents ---\n%s", bad, models)
+		}
+	}
+}
+
+// capturingCreator is an in-memory FileCreator that buffers every emitted
+// file. It's used by FieldNameTag tests to assert on generator output
+// without writing to disk.
+type capturingCreator struct {
+	mu    sync.Mutex
+	files map[string]*capturingBuffer
+}
+
+func newCapturingCreator() *capturingCreator {
+	return &capturingCreator{files: make(map[string]*capturingBuffer)}
+}
+
+func (c *capturingCreator) Create(path string) (io.WriteCloser, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	buf := &capturingBuffer{}
+	c.files[filepath.Clean(path)] = buf
+	return buf, nil
+}
+
+// find returns the contents of the first emitted file whose path ends with
+// the given suffix. Useful for locating models.ts under deeply nested
+// package paths.
+func (c *capturingCreator) find(suffix string) (string, bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	suffix = filepath.Clean(suffix)
+	for path, buf := range c.files {
+		if strings.HasSuffix(path, suffix) {
+			return buf.String(), true
+		}
+	}
+	return "", false
+}
+
+func (c *capturingCreator) paths() []string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	out := make([]string, 0, len(c.files))
+	for path := range c.files {
+		out = append(out, path)
+	}
+	slices.Sort(out)
+	return out
+}
+
+type capturingBuffer struct {
+	mu   sync.Mutex
+	data []byte
+}
+
+func (b *capturingBuffer) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.data = append(b.data, p...)
+	return len(p), nil
+}
+
+func (b *capturingBuffer) Close() error { return nil }
+
+func (b *capturingBuffer) String() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return string(b.data)
+}
+
 // configString computes a subtest name from the given configuration.
 func configString(options *flags.GenerateBindingsOptions) string {
 	lang := "JS"

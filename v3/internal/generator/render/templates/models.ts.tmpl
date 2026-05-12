@@ -115,7 +115,7 @@ export {{if $info.IsInterface}}interface{{else}}class{{end}} {{jsid $model.Name}
     {{- jsdoc $field.Decl.Doc.Text "    "}}
      */
     {{- end}}
-    "{{js $field.JsonName}}"{{if $field.Optional}}?{{end}}: {{$module.JSFieldType $field.StructField}};
+    {{if and $info.IsClass $field.Optional}}declare {{end}}"{{js $field.JsonName}}"{{if $field.Optional}}?{{end}}: {{$module.JSFieldType $field.StructField}};
     {{- end}}{{end}}
 {{- if $info.IsClass}}
 
