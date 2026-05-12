@@ -15,6 +15,7 @@ type GenerateBindingsOptions struct {
 	TS                bool   `name:"ts" description:"Generate Typescript bindings"`
 	UseInterfaces     bool   `name:"i" description:"Generate Typescript interfaces instead of classes"`
 	UseBundledRuntime bool   `name:"b" description:"Use the bundled runtime instead of importing the npm package"`
+	FieldNameTag      string `name:"fieldtag" description:"Struct tag to consult for JSON field names instead of 'json'. Supports bare-name form (e.g. 'yaml') and protobuf key=value form. Use 'protobuf' to match protojson output."`
 	UseNames          bool   `name:"names" description:"Use names instead of IDs for the binding calls"`
 	NoEvents          bool   `name:"noevents" description:"Do not generate types for registered custom events"`
 	NoIndex           bool   `name:"noindex" description:"Do not generate JS/TS index files"`
