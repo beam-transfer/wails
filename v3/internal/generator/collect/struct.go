@@ -183,6 +183,21 @@ func (info *StructInfo) Collect() *StructInfo {
 						name = ""
 					}
 
+					// Resolution order for the field name: alt tag (if set
+					// and present on the field) -> json tag -> Go field name.
+					// Reassigning name here is picked up by the nameFromTag
+					// capture below, so an alt-tag override wins ties in the
+					// dominance-resolution loop further down.
+					if alt := info.collector.options.FieldNameTag; alt != "" && alt != "json" {
+						altName, altSkip := fieldNameFromTag(reflect.StructTag(estruct.Tag(i)).Get(alt))
+						if altSkip {
+							continue
+						}
+						if altName != "" && isValidFieldName(altName) {
+							name = altName
+						}
+					}
+
 					index := make([]int, len(embedded.index)+1)
 					copy(index, embedded.index)
 					index[len(embedded.index)] = i
@@ -333,6 +348,48 @@ func parseTag(tag string) (name string, optional bool, quoted bool, visible bool
 	}
 
 	return
+}
+
+// fieldNameFromTag extracts a field name from a non-json struct tag value.
+// It accepts two shapes:
+//
+//   - Bare-name form (yaml-style): the first comma-separated segment is the
+//     name. A value of "-" reports skip, matching json:"-".
+//   - Protobuf form: any key=value segments switch into protobuf mode, where
+//     `json=` wins, falling back to `name=`. This matches protojson output.
+//
+// An empty name with skip=false means "no override; fall through to json".
+func fieldNameFromTag(tag string) (name string, skip bool) {
+	if tag == "" {
+		return "", false
+	}
+
+	parts := strings.Split(tag, ",")
+
+	var jsonName, protoName string
+	var hasKV bool
+	for _, part := range parts {
+		switch {
+		case strings.HasPrefix(part, "json="):
+			jsonName = strings.TrimPrefix(part, "json=")
+			hasKV = true
+		case strings.HasPrefix(part, "name="):
+			protoName = strings.TrimPrefix(part, "name=")
+			hasKV = true
+		}
+	}
+
+	if hasKV {
+		if jsonName != "" {
+			return jsonName, false
+		}
+		return protoName, false
+	}
+
+	if parts[0] == "-" {
+		return "", true
+	}
+	return parts[0], false
 }
 
 // isValidFieldName determines whether a field name is valid
