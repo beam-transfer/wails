@@ -31,6 +31,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 */
 ## [Unreleased]
 
+## v3.0.0-alpha2.107 - 2026-06-25
+
+## Changed
+- Bump `webview2` to v1.0.24.
+  - ci(webview2): fix release build (cross-compile Windows + complete go.sum) (#5671)
+  - fix(webview2): recover from transient runtime COM errors instead of exiting (#5658)
+  - fix(webview2): never treat a failed SetSize/PutBounds as fatal (#5597)
+  - feat: add go workspace for cross-module development
+  - fix(webview2): guard Focus() until controller initialisation completes (#5568)
+  - fix(v3/webview2): use log instead of fmt for error and stack trace output (#5453)
+  - chore(webview2): import scripts/ from go-webview2
+  - feat: migrate go-webview2 into wails monorepo (#5317)
+
 ## v3.0.0-alpha2.106 - 2026-06-24
 
 ## Changed
