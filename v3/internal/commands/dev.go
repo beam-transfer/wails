@@ -18,6 +18,7 @@ type DevOptions struct {
 	Config   string `description:"The config file including path" default:"./build/config.yml"`
 	VitePort int    `name:"port" description:"Specify the vite dev server port"`
 	Secure   bool   `name:"s" description:"Enable HTTPS"`
+	AppArgs  string `name:"appargs" description:"arguments to pass to the underlying app (quoted and space separated)"`
 }
 
 func Dev(options *DevOptions) error {
@@ -59,6 +60,7 @@ func Dev(options *DevOptions) error {
 	}
 
 	return Watcher(&WatcherOptions{
-		Config: options.Config,
+		Config:  options.Config,
+		AppArgs: options.AppArgs,
 	})
 }

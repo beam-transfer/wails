@@ -18,7 +18,8 @@ func ensureIgnored(list *[]string, pattern string) {
 }
 
 type WatcherOptions struct {
-	Config string `description:"The config file including path" default:"."`
+	Config  string `description:"The config file including path" default:"."`
+	AppArgs string
 }
 
 func Watcher(options *WatcherOptions) error {
@@ -42,6 +43,14 @@ func Watcher(options *WatcherOptions) error {
 	}
 
 	ensureIgnored(&devconfig.Config.Ignore.File, "*_test.go")
+
+	if options.AppArgs != "" {
+		for i, exec := range devconfig.Config.ExecStruct {
+			if exec.Type == "primary" {
+				devconfig.Config.ExecStruct[i].Cmd += " " + options.AppArgs
+			}
+		}
+	}
 
 	watcherEngine, err := engine.NewEngineFromConfig(devconfig.Config)
 	if err != nil {
